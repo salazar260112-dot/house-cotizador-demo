@@ -18,6 +18,7 @@ create table if not exists public.productos (
   marca text not null,
   descripcion text not null,
   color text,
+  categoria text,
   imagen_url text,
   precio_usd numeric(12,2) default 0,
   precio_mxn numeric(12,2) default 0,
@@ -122,21 +123,21 @@ on conflict (email) do update set
   sucursal = excluded.sucursal,
   activo = excluded.activo;
 
-insert into public.productos (sku, modelo, marca, descripcion, color, precio_usd, precio_mxn, imagen_url, activo)
+insert into public.productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
 values
-  ('CAF-CTS90DP4NW2', 'CTS90DP4NW2', 'Cafe', 'Horno electrico de pared 30 pulgadas, conveccion europea, acabado blanco mate, controles tactiles y conectividad.', 'Blanco mate', 0, 0, 'https://placehold.co/600x600?text=Cafe+Horno', true),
-  ('CAF-CHS90XP2MS1', 'CHS90XP2MS1', 'Cafe', 'Estufa slide-in de induccion 30 pulgadas con horno de conveccion, acero inoxidable y controles frontales.', 'Acero inoxidable', 0, 0, 'https://placehold.co/600x600?text=Cafe+Estufa', true),
-  ('MON-ZET1FHSS', 'ZET1FHSS', 'Monogram', 'Horno de pared profesional 30 pulgadas, conveccion, sonda de temperatura y acabado en acero inoxidable.', 'Acero inoxidable', 0, 0, 'https://placehold.co/600x600?text=Monogram+Horno', true),
-  ('MON-ZGU36RSLSS', 'ZGU36RSLSS', 'Monogram', 'Parrilla de gas profesional 36 pulgadas con quemadores de alto desempeno y parrillas robustas.', 'Acero inoxidable', 0, 0, 'https://placehold.co/600x600?text=Monogram+Parrilla', true),
-  ('MAB-IO6060HEWI0', 'IO6060HEWI0', 'IO Mabe', 'Horno empotrable electrico 60 cm con acabado espejo, funciones programables y diseno moderno.', 'Espejo negro', 0, 0, 'https://placehold.co/600x600?text=IO+Mabe+Horno', true),
-  ('MAB-EM7646BSIS0', 'EM7646BSIS0', 'Mabe', 'Estufa de piso 30 pulgadas, horno amplio, parrillas de fundicion y cubierta sellada.', 'Acero inoxidable', 0, 0, 'https://placehold.co/600x600?text=Mabe+Estufa', true)
+  ('CAF-CTS90DP4NW2', 'CTS90DP4NW2', 'Cafe', 'Horno electrico de pared 30 pulgadas, conveccion europea, acabado blanco mate, controles tactiles y conectividad.', 'Blanco mate', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Cafe+Horno', true),
+  ('CAF-CHS90XP2MS1', 'CHS90XP2MS1', 'Cafe', 'Estufa slide-in de induccion 30 pulgadas con horno de conveccion, acero inoxidable y controles frontales.', 'Acero inoxidable', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Cafe+Estufa', true),
+  ('MON-ZET1FHSS', 'ZET1FHSS', 'Monogram', 'Horno de pared profesional 30 pulgadas, conveccion, sonda de temperatura y acabado en acero inoxidable.', 'Acero inoxidable', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Monogram+Horno', true),
+  ('MON-ZGU36RSLSS', 'ZGU36RSLSS', 'Monogram', 'Parrilla de gas profesional 36 pulgadas con quemadores de alto desempeno y parrillas robustas.', 'Acero inoxidable', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Monogram+Parrilla', true),
+  ('MAB-IO6060HEWI0', 'IO6060HEWI0', 'IO Mabe', 'Horno empotrable electrico 60 cm con acabado espejo, funciones programables y diseno moderno.', 'Espejo negro', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=IO+Mabe+Horno', true),
+  ('MAB-EM7646BSIS0', 'EM7646BSIS0', 'Mabe', 'Estufa de piso 30 pulgadas, horno amplio, parrillas de fundicion y cubierta sellada.', 'Acero inoxidable', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Mabe+Estufa', true)
 on conflict (sku) do update set
   modelo = excluded.modelo,
   marca = excluded.marca,
   descripcion = excluded.descripcion,
   color = excluded.color,
+  categoria = excluded.categoria,
   precio_usd = excluded.precio_usd,
   precio_mxn = excluded.precio_mxn,
   imagen_url = excluded.imagen_url,
   activo = excluded.activo;
-

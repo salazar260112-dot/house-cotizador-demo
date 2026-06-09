@@ -42,7 +42,8 @@ VITE_APP_BASE_URL=http://IP-DE-LA-VPS:3105
 1. Crear un proyecto nuevo separado para `house-cotizador-demo`.
 2. Abrir SQL Editor.
 3. Ejecutar `supabase/house_cotizador_schema.sql`.
-4. Copiar `Project URL` y `anon public key` al `.env`.
+4. Ejecutar `supabase/products_from_price_lists.sql` para cargar el catalogo desde Excel.
+5. Copiar `Project URL` y `anon public key` al `.env`.
 
 Tablas incluidas:
 
@@ -52,6 +53,13 @@ Tablas incluidas:
 - `cotizacion_detalle`
 
 El SQL no borra datos existentes y usa `create table if not exists` / `insert ... on conflict`.
+
+El archivo `products_from_price_lists.sql` se genero desde:
+
+- `Lista de Precios Mabe 2026 Ene.. Rev1.xlsx`
+- `Lista Precios Monogram y Cafe 20260315 (1).xlsx`
+
+Solo importa SKU/modelo, marca, descripcion y categoria. No importa precios ni costos; el asesor captura el precio manual en cada cotizacion.
 
 ## Flujo PDF con n8n
 
@@ -113,4 +121,3 @@ git push -u origin main
 ```
 
 No subir `.env`.
-

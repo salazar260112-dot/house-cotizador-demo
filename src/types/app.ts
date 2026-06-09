@@ -21,6 +21,7 @@ export interface Product {
   marca: string;
   descripcion: string;
   color: string;
+  categoria?: string;
   imagen_url: string;
   activo: boolean;
   precio_usd?: number;
@@ -59,4 +60,3 @@ export interface QuoteLineInput {
   precio_unitario: number;
   subtotal: number;
 }
-

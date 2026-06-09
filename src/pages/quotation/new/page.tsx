@@ -604,11 +604,8 @@ export default function NewQuotation() {
                             <span className="text-xs text-foreground-500">
                               Color: {product.color || 'No especificado'}
                             </span>
-                            <span className="text-xs font-medium text-foreground-700">
-                              MXN ${Number(product.precio_mxn || 0).toLocaleString('es-MX')}
-                            </span>
-                            <span className="text-xs text-foreground-400">
-                              USD ${Number(product.precio_usd || 0).toLocaleString('en-US')}
+                            <span className="text-xs font-medium text-primary-700">
+                              Precio manual en cotizacion
                             </span>
                           </div>
                         </div>

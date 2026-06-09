@@ -9,7 +9,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   const pattern = `%${q}%`;
   const { data, error } = await client
     .from('productos')
-    .select('id,sku,modelo,marca,descripcion,color,imagen_url,activo,precio_usd,precio_mxn')
+    .select('id,sku,modelo,marca,descripcion,color,categoria,imagen_url,activo,precio_usd,precio_mxn')
     .eq('activo', true)
     .or(`sku.ilike.${pattern},modelo.ilike.${pattern},marca.ilike.${pattern},descripcion.ilike.${pattern}`)
     .order('marca', { ascending: true })
@@ -18,4 +18,3 @@ export async function searchProducts(query: string): Promise<Product[]> {
   if (error) throw error;
   return (data || []) as Product[];
 }
-
