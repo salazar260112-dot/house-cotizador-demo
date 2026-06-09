@@ -69,8 +69,9 @@ La pantalla `Nueva Cotizacion` hace lo siguiente al presionar `Generar PDF`:
 1. Valida cliente, correo, asesor/origen y productos.
 2. Inserta encabezado en `cotizador_cotizaciones`.
 3. Inserta productos en `cotizador_cotizacion_detalle`.
-4. Envia payload a `VITE_N8N_WEBHOOK_GENERAR_PDF`.
-5. Si n8n responde con `pdf_url`, `pdfUrl` o `url`, actualiza `cotizador_cotizaciones.pdf_url` y estatus `Enviada`.
+4. Genera el HTML profesional de la cotizacion con el logo de House.
+5. Envia payload a `VITE_N8N_WEBHOOK_GENERAR_PDF`.
+6. Si n8n responde con `pdf_url`, `pdfUrl` o `url`, actualiza `cotizador_cotizaciones.pdf_url` y estatus `Enviada`.
 
 Politica fija enviada al webhook:
 
@@ -82,10 +83,16 @@ Politica fija enviada al webhook:
 {
   "app_base_url": "http://IP-DE-LA-VPS:3105",
   "politica_pdf": "Cotizacion valida hasta agotar existencia...",
+  "html_pdf": "<!doctype html>...",
+  "pdf_filename": "COT-2026-001-house.pdf",
   "cotizacion": {},
-  "detalle": []
+  "detalle": [],
+  "detalle_db": []
 }
 ```
+
+En n8n/PDF.co se debe convertir el campo `html_pdf` a PDF. La API key de PDF.co debe configurarse en n8n como
+credencial o variable segura, no en el frontend.
 
 Respuesta recomendada de n8n:
 

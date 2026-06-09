@@ -55,6 +55,9 @@ export interface QuoteLineInput {
   sku: string;
   modelo: string;
   descripcion: string;
+  marca?: string;
+  color?: string;
+  imagen_url?: string;
   cantidad: number;
   moneda: Currency;
   precio_unitario: number;

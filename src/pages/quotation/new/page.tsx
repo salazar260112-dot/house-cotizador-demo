@@ -4,6 +4,7 @@ import { BRANCHES, LEAD_SOURCES, PDF_POLICY } from '@/lib/constants';
 import { getCurrentUser, logout } from '@/services/auth';
 import { searchProducts } from '@/services/products';
 import { createQuoteAndRequestPdf } from '@/services/quotes';
+import { renderQuotationHtml } from '@/services/quoteTemplate';
 import { listActiveAdvisors } from '@/services/users';
 import type { Product } from '@/types/app';
 
@@ -221,6 +222,23 @@ export default function NewQuotation() {
     return '';
   };
 
+  const getResponsibleName = () => (origen === 'Proyectos Directos' ? responsiblePerson : selectedAdvisor);
+  const getMainCurrency = () => (cartProducts.some((p) => p.currency === 'USD') ? 'USD' : 'MXN');
+  const buildQuoteDetail = () =>
+    cartProducts.map((cp) => ({
+      producto_id: cp.id,
+      sku: cp.sku,
+      modelo: cp.model,
+      descripcion: cp.description,
+      marca: cp.brand,
+      color: cp.color,
+      imagen_url: cp.image,
+      cantidad: cp.quantity,
+      moneda: cp.currency,
+      precio_unitario: cp.unitPrice,
+      subtotal: cp.subtotal,
+    }));
+
   const handlePrintPdf = async () => {
     setFormError('');
     setSuccessMessage('');
@@ -232,8 +250,8 @@ export default function NewQuotation() {
 
     setGeneratingPdf(true);
     try {
-      const responsibleName = origen === 'Proyectos Directos' ? responsiblePerson : selectedAdvisor;
-      const mainCurrency = cartProducts.some((p) => p.currency === 'USD') ? 'USD' : 'MXN';
+      const responsibleName = getResponsibleName();
+      const mainCurrency = getMainCurrency();
       const quote = await createQuoteAndRequestPdf({
         fecha_cotizacion: date,
         cliente_nombre: clientName,
@@ -249,16 +267,8 @@ export default function NewQuotation() {
         subtotal: totalSubtotal,
         total: totalSubtotal,
         moneda_principal: mainCurrency,
-        detalle: cartProducts.map((cp) => ({
-          producto_id: cp.id,
-          sku: cp.sku,
-          modelo: cp.model,
-          descripcion: cp.description,
-          cantidad: cp.quantity,
-          moneda: cp.currency,
-          precio_unitario: cp.unitPrice,
-          subtotal: cp.subtotal,
-        })),
+        validity_days: validityDays,
+        detalle: buildQuoteDetail(),
       });
       setSuccessMessage(
         quote.pdf_url
@@ -279,6 +289,28 @@ export default function NewQuotation() {
   };
 
   if (!advisor) return null;
+
+  const previewHtml = renderQuotationHtml({
+    quote: {
+      folio: 'COT-PREVIA',
+      fecha_cotizacion: date,
+      cliente_nombre: clientName || 'Cliente por confirmar',
+      cliente_telefono: clientPhone || 'Por confirmar',
+      cliente_correo: clientEmail || 'cliente@correo.com',
+      cliente_ciudad: city || 'Ciudad por confirmar',
+      origen: origen || 'Origen por confirmar',
+      sucursal: branch || 'Sucursal por confirmar',
+      asesor_id: advisor.id,
+      asesor_nombre: getResponsibleName() || advisor.name || advisor.nombre || 'Asesor House',
+      fuente_lead: leadSource || 'No especificada',
+      observaciones: notes,
+      subtotal: totalSubtotal,
+      total: totalSubtotal,
+      moneda_principal: getMainCurrency(),
+    },
+    detalle: buildQuoteDetail(),
+    validityDays,
+  });
 
   return (
     <div className="min-h-screen bg-background-100">
@@ -878,7 +910,7 @@ export default function NewQuotation() {
       {showPreview && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh]">
           <div className="absolute inset-0 bg-foreground-950/40" onClick={() => setShowPreview(false)} />
-          <div className="relative bg-background-50 rounded-lg w-full max-w-[800px] max-h-[85vh] overflow-y-auto mx-4">
+          <div className="relative bg-background-50 rounded-lg w-full max-w-[980px] max-h-[90vh] overflow-hidden mx-4">
             <div className="sticky top-0 bg-background-50 border-b border-background-200 px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-lg font-semibold text-foreground-900">Vista Previa de Cotización</h2>
               <button
@@ -889,7 +921,15 @@ export default function NewQuotation() {
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="bg-background-100 p-4 h-[calc(90vh-136px)] overflow-auto">
+              <iframe
+                title="Vista previa de cotizacion"
+                srcDoc={previewHtml}
+                className="w-full h-full min-h-[760px] bg-background-50 border border-background-200 rounded-md"
+              />
+            </div>
+
+            <div className="hidden">
               <div className="text-center border-b border-background-200 pb-5">
                 <div className="w-12 h-12 bg-primary-500 rounded-md flex items-center justify-center mx-auto mb-3">
                   <i className="ri-home-office-line text-xl text-background-50"></i>

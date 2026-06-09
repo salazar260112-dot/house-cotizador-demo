@@ -1,5 +1,6 @@
 ﻿import { PDF_POLICY } from '@/lib/constants';
 import { requireSupabase } from '@/lib/supabase';
+import { renderQuotationHtml } from '@/services/quoteTemplate';
 import type { Currency, QuoteLineInput, QuoteSummary } from '@/types/app';
 
 interface CreateQuoteInput {
@@ -17,6 +18,7 @@ interface CreateQuoteInput {
   subtotal: number;
   total: number;
   moneda_principal: Currency;
+  validity_days: number;
   detalle: QuoteLineInput[];
 }
 
@@ -56,8 +58,15 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
   if (quoteError) throw quoteError;
 
   const detalle = input.detalle.map((line) => ({
-    ...line,
     cotizacion_id: quote.id,
+    producto_id: line.producto_id,
+    sku: line.sku,
+    modelo: line.modelo,
+    descripcion: line.descripcion,
+    cantidad: line.cantidad,
+    moneda: line.moneda,
+    precio_unitario: line.precio_unitario,
+    subtotal: line.subtotal,
   }));
 
   const { error: detailError } = await client.from('cotizador_cotizacion_detalle').insert(detalle);
@@ -65,16 +74,26 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
 
   const webhookUrl = getPdfWebhookUrl();
   let pdfUrl = '';
+  const appBaseUrl = getAppBaseUrl();
+  const htmlPdf = renderQuotationHtml({
+    quote,
+    detalle: input.detalle,
+    validityDays: input.validity_days,
+    appBaseUrl,
+  });
 
   if (webhookUrl) {
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        app_base_url: getAppBaseUrl(),
+        app_base_url: appBaseUrl,
         politica_pdf: PDF_POLICY,
+        html_pdf: htmlPdf,
+        pdf_filename: `${quote.folio || quote.id}-house.pdf`,
         cotizacion: quote,
-        detalle,
+        detalle: input.detalle,
+        detalle_db: detalle,
       }),
     });
 
