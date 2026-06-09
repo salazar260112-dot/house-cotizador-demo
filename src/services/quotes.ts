@@ -112,4 +112,17 @@ export async function listQuotes() {
   return (data || []) as QuoteSummary[];
 }
 
+export async function listQuotesByAdvisor(advisorId: string) {
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from('cotizador_cotizaciones')
+    .select('*')
+    .eq('asesor_id', advisorId)
+    .order('fecha_cotizacion', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as QuoteSummary[];
+}
+
 

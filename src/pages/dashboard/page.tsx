@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { listQuotesByAdvisor } from '@/services/quotes';
+import type { QuoteSummary } from '@/types/app';
 
 interface Advisor {
   id: string;
@@ -7,19 +9,16 @@ interface Advisor {
   email: string;
   branch: string;
   role: string;
+  userRole?: string;
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [advisor, setAdvisor] = useState<Advisor | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [recentQuotations] = useState([
-    { id: 'COT-2026-001', client: 'Laura Hernández', date: '2026-06-07', total: '$45,999 MXN', status: 'Enviada' },
-    { id: 'COT-2026-002', client: 'Miguel Ángel Ruiz', date: '2026-06-06', total: '$89,499 MXN', status: 'Pendiente' },
-    { id: 'COT-2026-003', client: 'Sofía Martínez', date: '2026-06-05', total: '$23,999 MXN', status: 'Aprobada' },
-    { id: 'COT-2026-004', client: 'Ricardo Torres', date: '2026-06-04', total: '$156,800 MXN', status: 'Enviada' },
-    { id: 'COT-2026-005', client: 'Gabriela Flores', date: '2026-06-03', total: '$12,499 MXN', status: 'Vencida' },
-  ]);
+  const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
+  const [isLoadingQuotes, setIsLoadingQuotes] = useState(true);
+  const [quotesError, setQuotesError] = useState('');
 
   useEffect(() => {
     const stored = sessionStorage.getItem('currentAdvisor');
@@ -27,12 +26,24 @@ export default function Dashboard() {
       navigate('/login');
       return;
     }
-    const adv = JSON.parse(stored);
-    if (adv.userRole === 'supervisor') {
+
+    const currentAdvisor = JSON.parse(stored) as Advisor;
+    if (currentAdvisor.userRole === 'supervisor') {
       navigate('/supervisor/dashboard');
       return;
     }
-    setAdvisor(adv);
+
+    setAdvisor(currentAdvisor);
+    setIsLoadingQuotes(true);
+    setQuotesError('');
+
+    listQuotesByAdvisor(currentAdvisor.id)
+      .then(setQuotes)
+      .catch((error) => {
+        console.error(error);
+        setQuotesError('No se pudieron cargar las cotizaciones del asesor.');
+      })
+      .finally(() => setIsLoadingQuotes(false));
   }, [navigate]);
 
   const handleLogout = () => {
@@ -69,11 +80,25 @@ export default function Dashboard() {
 
   if (!advisor) return null;
 
+  const today = new Date().toISOString().slice(0, 10);
+  const currentMonth = today.slice(0, 7);
+  const quotesToday = quotes.filter((quote) => quote.fecha_cotizacion === today).length;
+  const quotesThisMonth = quotes.filter((quote) => quote.fecha_cotizacion?.startsWith(currentMonth)).length;
+  const approvedQuotes = quotes.filter((quote) => quote.estatus === 'Aprobada');
+  const approvalRate = quotes.length ? Math.round((approvedQuotes.length / quotes.length) * 100) : 0;
+  const recentQuotations = quotes.slice(0, 5);
+  const formatCurrency = (value: number, currency = 'MXN') =>
+    new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+    }).format(Number(value || 0));
+
   const stats = [
-    { label: 'Cotizaciones Hoy', value: '3', icon: 'ri-file-list-3-line', color: 'primary' },
-    { label: 'Cotizaciones del Mes', value: '28', icon: 'ri-calendar-check-line', color: 'accent' },
-    { label: 'Tasa de Aprobación', value: '64%', icon: 'ri-pie-chart-line', color: 'secondary' },
-    { label: 'Ventas Cerradas', value: '12', icon: 'ri-trophy-line', color: 'primary' },
+    { label: 'Cotizaciones Hoy', value: String(quotesToday), icon: 'ri-file-list-3-line', color: 'primary' },
+    { label: 'Cotizaciones del Mes', value: String(quotesThisMonth), icon: 'ri-calendar-check-line', color: 'accent' },
+    { label: 'Tasa de Aprobacion', value: `${approvalRate}%`, icon: 'ri-pie-chart-line', color: 'secondary' },
+    { label: 'Ventas Cerradas', value: String(approvedQuotes.length), icon: 'ri-trophy-line', color: 'primary' },
   ];
 
   return (
@@ -127,7 +152,7 @@ export default function Dashboard() {
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground-700 hover:bg-background-100 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       <i className="ri-logout-box-r-line text-base"></i>
-                      Cerrar Sesión
+                      Cerrar Sesion
                     </button>
                   </div>
                 </>
@@ -180,7 +205,7 @@ export default function Dashboard() {
                 <h2 className="text-base font-semibold text-foreground-900">
                   Cotizaciones Recientes
                 </h2>
-                <span className="text-xs text-foreground-500">Últimas 5</span>
+                <span className="text-xs text-foreground-500">Ultimas 5</span>
               </div>
 
               <div className="overflow-x-auto">
@@ -205,28 +230,49 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentQuotations.map((q) => (
+                    {isLoadingQuotes && (
+                      <tr>
+                        <td colSpan={5} className="py-8 px-2 text-center text-foreground-500">
+                          Cargando cotizaciones...
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingQuotes && quotesError && (
+                      <tr>
+                        <td colSpan={5} className="py-8 px-2 text-center text-red-600">
+                          {quotesError}
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingQuotes && !quotesError && recentQuotations.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-8 px-2 text-center text-foreground-500">
+                          No hay cotizaciones registradas para este asesor.
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingQuotes && !quotesError && recentQuotations.map((quote) => (
                       <tr
-                        key={q.id}
+                        key={quote.id}
                         className="border-b border-background-100 hover:bg-background-50 transition-colors"
                       >
                         <td className="py-3 px-2 text-foreground-800 font-medium whitespace-nowrap">
-                          {q.id}
+                          {quote.folio || quote.id}
                         </td>
                         <td className="py-3 px-2 text-foreground-700 whitespace-nowrap">
-                          {q.client}
+                          {quote.cliente_nombre}
                         </td>
                         <td className="py-3 px-2 text-foreground-600 whitespace-nowrap">
-                          {q.date}
+                          {quote.fecha_cotizacion}
                         </td>
                         <td className="py-3 px-2 text-foreground-800 text-right font-medium whitespace-nowrap">
-                          {q.total}
+                          {formatCurrency(quote.total, quote.moneda_principal || 'MXN')}
                         </td>
                         <td className="py-3 px-2 text-center whitespace-nowrap">
                           <span
-                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyle(q.status)}`}
+                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyle(quote.estatus)}`}
                           >
-                            {q.status}
+                            {quote.estatus}
                           </span>
                         </td>
                       </tr>
@@ -248,10 +294,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-background-50">
-                    Nueva Cotización
+                    Nueva Cotizacion
                   </h3>
                   <p className="text-sm text-background-50/80 mt-0.5">
-                    Crear cotización desde cero
+                    Crear cotizacion desde cero
                   </p>
                 </div>
               </div>
@@ -259,12 +305,12 @@ export default function Dashboard() {
 
             <div className="bg-background-50 border border-background-200 rounded-lg p-5">
               <h3 className="text-sm font-semibold text-foreground-800 mb-3">
-                Acceso Rápido
+                Acceso Rapido
               </h3>
               <div className="space-y-1">
                 <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-background-100 text-sm text-foreground-700 transition-colors cursor-pointer whitespace-nowrap">
                   <i className="ri-file-search-line text-base text-foreground-500"></i>
-                  Buscar Cotización
+                  Buscar Cotizacion
                 </button>
                 <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-background-100 text-sm text-foreground-700 transition-colors cursor-pointer whitespace-nowrap">
                   <i className="ri-download-line text-base text-foreground-500"></i>
@@ -272,14 +318,14 @@ export default function Dashboard() {
                 </button>
                 <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-background-100 text-sm text-foreground-700 transition-colors cursor-pointer whitespace-nowrap">
                   <i className="ri-price-tag-3-line text-base text-foreground-500"></i>
-                  Catálogo de Productos
+                  Catalogo de Productos
                 </button>
               </div>
             </div>
 
             <div className="bg-background-50 border border-background-200 rounded-lg p-5">
               <h3 className="text-sm font-semibold text-foreground-800 mb-3">
-                Información de Sucursal
+                Informacion de Sucursal
               </h3>
               <div className="space-y-2 text-sm text-foreground-600">
                 <div className="flex items-center gap-2">
