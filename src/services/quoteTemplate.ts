@@ -18,11 +18,12 @@ function escapeHtml(value: unknown) {
 }
 
 function formatCurrency(value: number, currency: Currency = 'MXN') {
-  return new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-MX', {
-    style: 'currency',
-    currency,
+  const locale = currency === 'USD' ? 'en-US' : 'es-MX';
+  const amount = Number(value || 0).toLocaleString(locale, {
     minimumFractionDigits: 2,
-  }).format(Number(value || 0));
+    maximumFractionDigits: 2,
+  });
+  return `$${amount} ${currency}`;
 }
 
 function formatDate(value?: string) {
@@ -45,7 +46,9 @@ export function renderQuotationHtml({
 }: RenderQuoteHtmlInput) {
   const logoUrl = resolveLogoUrl(appBaseUrl);
   const currency = quote.moneda_principal || detalle[0]?.moneda || 'MXN';
-  const total = Number(quote.total ?? detalle.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
+  const subtotal = Number(quote.subtotal ?? detalle.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
+  const total = Number(quote.total ?? subtotal * 1.16);
+  const iva = Math.max(total - subtotal, 0);
   const date = quote.fecha_cotizacion || new Date().toISOString().slice(0, 10);
   const folio = quote.folio || 'COT-PREVIA';
   const rows = detalle
@@ -489,7 +492,8 @@ export function renderQuotationHtml({
         <div class="totals">
           <h3>Resumen</h3>
           <div class="total-row"><span>Productos</span><strong>${escapeHtml(detalle.length)}</strong></div>
-          <div class="total-row"><span>Subtotal</span><strong>${formatCurrency(total, currency)}</strong></div>
+          <div class="total-row"><span>Subtotal</span><strong>${formatCurrency(subtotal, currency)}</strong></div>
+          <div class="total-row"><span>IVA 16%</span><strong>${formatCurrency(iva, currency)}</strong></div>
           <div class="total-row grand"><span>Total</span><span>${formatCurrency(total, currency)}</span></div>
         </div>
       </section>

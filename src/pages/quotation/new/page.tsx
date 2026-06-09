@@ -46,6 +46,8 @@ function formatCurrency(amount: number, currency: 'USD' | 'MXN'): string {
   return `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
 }
 
+const IVA_RATE = 0.16;
+
 export default function NewQuotation() {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
@@ -209,6 +211,8 @@ export default function NewQuotation() {
   };
 
   const totalSubtotal = cartProducts.reduce((sum, cp) => sum + cp.subtotal, 0);
+  const totalIva = totalSubtotal * IVA_RATE;
+  const grandTotal = totalSubtotal + totalIva;
 
   const validateQuotation = () => {
     if (!clientName.trim()) return 'Captura el nombre del cliente.';
@@ -268,7 +272,7 @@ export default function NewQuotation() {
         fuente_lead: leadSource,
         observaciones: notes,
         subtotal: totalSubtotal,
-        total: totalSubtotal,
+        total: grandTotal,
         moneda_principal: mainCurrency,
         validity_days: validityDays,
         detalle: buildQuoteDetail(),
@@ -309,7 +313,7 @@ export default function NewQuotation() {
       fuente_lead: leadSource || 'No especificada',
       observaciones: notes,
       subtotal: totalSubtotal,
-      total: totalSubtotal,
+      total: grandTotal,
       moneda_principal: getMainCurrency(),
     },
     detalle: buildQuoteDetail(),
@@ -837,10 +841,22 @@ export default function NewQuotation() {
                   <span className="text-sm text-foreground-600">Productos</span>
                   <span className="text-sm font-medium text-foreground-800">{cartProducts.length}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground-800">Subtotal</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-foreground-600">Subtotal</span>
+                  <span className="text-sm font-semibold text-foreground-900">
+                    {formatCurrency(totalSubtotal, getMainCurrency())}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-foreground-600">IVA 16%</span>
+                  <span className="text-sm font-semibold text-foreground-900">
+                    {formatCurrency(totalIva, getMainCurrency())}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-background-200">
+                  <span className="text-sm font-medium text-foreground-800">Total</span>
                   <span className="text-lg font-bold text-foreground-900">
-                    ${totalSubtotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN
+                    {formatCurrency(grandTotal, getMainCurrency())}
                   </span>
                 </div>
               </div>
