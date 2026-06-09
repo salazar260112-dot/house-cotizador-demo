@@ -1,4 +1,4 @@
-import { requireSupabase } from '@/lib/supabase';
+﻿import { requireSupabase } from '@/lib/supabase';
 import type { AppUser } from '@/types/app';
 
 const STORAGE_KEY = 'currentAdvisor';
@@ -30,7 +30,7 @@ export function logout() {
 export async function loginWithDemoPassword(email: string, password: string) {
   const client = requireSupabase();
   const { data, error } = await client
-    .from('users')
+    .from('cotizador_users')
     .select('id,nombre,email,rol,sucursal,activo')
     .eq('email', email.trim().toLowerCase())
     .eq('password_demo', password)
@@ -43,4 +43,5 @@ export async function loginWithDemoPassword(email: string, password: string) {
   setCurrentUser(data as AppUser);
   return normalizeUser(data as AppUser);
 }
+
 

@@ -1,8 +1,8 @@
--- Catalogo generado desde listas Excel para house-cotizador-demo.
+﻿-- Catalogo generado desde listas Excel para house-cotizador-demo.
 -- No importa precios ni costos. Los asesores capturan precio manual por cotizacion.
 -- Ejecutar despues de supabase/house_cotizador_schema.sql.
 
-insert into public.productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
+insert into public.cotizador_productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
 values
   ('CX10DC9SPDS', 'CX10DC9SPDS', 'Cafe', 'Cubre ducto de 10" en color negro matte para campana', '', 'Acceorio Campana', 0, 0, 'https://placehold.co/600x600?text=CX10DC9SPDS', true),
   ('CX10DC9SPSS', 'CX10DC9SPSS', 'Cafe', 'Cubre ducto de 10" en color acero inoxidable para campana', '', 'Acceorio Campana', 0, 0, 'https://placehold.co/600x600?text=CX10DC9SPSS', true),
@@ -215,7 +215,7 @@ on conflict (sku) do update set
   imagen_url = excluded.imagen_url,
   activo = true;
 
-insert into public.productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
+insert into public.cotizador_productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
 values
   ('IO8094GETSS0', 'IO8094GETSS0', 'IO Mabe', 'ESTUFA GAS 80 CM IO MABE INX', '', 'Estufas', 0, 0, 'https://placehold.co/600x600?text=IO8094GETSS0', true),
   ('IO8095GETSX0', 'IO8095GETSX0', 'IO Mabe', 'ESTUFA GAS 80 CM IO MABE INX', '', 'Estufas', 0, 0, 'https://placehold.co/600x600?text=IO8095GETSX0', true),
@@ -428,7 +428,7 @@ on conflict (sku) do update set
   imagen_url = excluded.imagen_url,
   activo = true;
 
-insert into public.productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
+insert into public.cotizador_productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
 values
   ('MCL2440PPDG0', 'MCL2440PPDG0', 'Mabe', 'CTRO LAVADO 20 KG MABE DIAMON', '', 'Lavadoras', 0, 0, 'https://placehold.co/600x600?text=MCL2440PPDG0', true),
   ('MCL2440PSBB0', 'MCL2440PSBB0', 'Mabe', 'CTRO LAVADO 24 KG GAS LP BLANCO MABE', '', 'Lavadoras', 0, 0, 'https://placehold.co/600x600?text=MCL2440PSBB0', true),
@@ -635,3 +635,4 @@ on conflict (sku) do update set
   precio_mxn = 0,
   imagen_url = excluded.imagen_url,
   activo = true;
+

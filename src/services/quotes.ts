@@ -1,4 +1,4 @@
-import { PDF_POLICY } from '@/lib/constants';
+﻿import { PDF_POLICY } from '@/lib/constants';
 import { requireSupabase } from '@/lib/supabase';
 import type { Currency, QuoteLineInput, QuoteSummary } from '@/types/app';
 
@@ -32,7 +32,7 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
   const client = requireSupabase();
 
   const { data: quote, error: quoteError } = await client
-    .from('cotizaciones')
+    .from('cotizador_cotizaciones')
     .insert({
       fecha_cotizacion: input.fecha_cotizacion,
       cliente_nombre: input.cliente_nombre,
@@ -60,7 +60,7 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
     cotizacion_id: quote.id,
   }));
 
-  const { error: detailError } = await client.from('cotizacion_detalle').insert(detalle);
+  const { error: detailError } = await client.from('cotizador_cotizacion_detalle').insert(detalle);
   if (detailError) throw detailError;
 
   const webhookUrl = getPdfWebhookUrl();
@@ -88,7 +88,7 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
 
   if (pdfUrl) {
     const { data: updated, error: updateError } = await client
-      .from('cotizaciones')
+      .from('cotizador_cotizaciones')
       .update({ pdf_url: pdfUrl, estatus: 'Enviada' })
       .eq('id', quote.id)
       .select('*')
@@ -103,7 +103,7 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
 export async function listQuotes() {
   const client = requireSupabase();
   const { data, error } = await client
-    .from('cotizaciones')
+    .from('cotizador_cotizaciones')
     .select('*')
     .order('fecha_cotizacion', { ascending: false })
     .order('created_at', { ascending: false });
@@ -111,4 +111,5 @@ export async function listQuotes() {
   if (error) throw error;
   return (data || []) as QuoteSummary[];
 }
+
 

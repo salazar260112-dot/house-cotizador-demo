@@ -1,6 +1,6 @@
-create extension if not exists pgcrypto;
+﻿create extension if not exists pgcrypto;
 
-create table if not exists public.users (
+create table if not exists public.cotizador_users (
   id uuid primary key default gen_random_uuid(),
   nombre text not null,
   email text not null unique,
@@ -11,7 +11,7 @@ create table if not exists public.users (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.productos (
+create table if not exists public.cotizador_productos (
   id uuid primary key default gen_random_uuid(),
   sku text not null unique,
   modelo text not null,
@@ -26,7 +26,7 @@ create table if not exists public.productos (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.cotizaciones (
+create table if not exists public.cotizador_cotizaciones (
   id uuid primary key default gen_random_uuid(),
   folio text unique,
   fecha_cotizacion date not null,
@@ -48,10 +48,10 @@ create table if not exists public.cotizaciones (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.cotizacion_detalle (
+create table if not exists public.cotizador_cotizacion_detalle (
   id uuid primary key default gen_random_uuid(),
-  cotizacion_id uuid not null references public.cotizaciones(id) on delete cascade,
-  producto_id uuid references public.productos(id),
+  cotizacion_id uuid not null references public.cotizador_cotizaciones(id) on delete cascade,
+  producto_id uuid references public.cotizador_productos(id),
   sku text not null,
   modelo text,
   descripcion text not null,
@@ -62,12 +62,12 @@ create table if not exists public.cotizacion_detalle (
   created_at timestamptz not null default now()
 );
 
-create index if not exists idx_productos_search on public.productos using gin (
+create index if not exists idx_cotizador_productos_search on public.cotizador_productos using gin (
   to_tsvector('simple', coalesce(sku,'') || ' ' || coalesce(modelo,'') || ' ' || coalesce(marca,'') || ' ' || coalesce(descripcion,''))
 );
-create index if not exists idx_cotizaciones_fecha on public.cotizaciones(fecha_cotizacion);
-create index if not exists idx_cotizaciones_asesor on public.cotizaciones(asesor_id);
-create index if not exists idx_cotizaciones_origen on public.cotizaciones(origen);
+create index if not exists idx_cotizador_cotizaciones_fecha on public.cotizador_cotizaciones(fecha_cotizacion);
+create index if not exists idx_cotizador_cotizaciones_asesor on public.cotizador_cotizaciones(asesor_id);
+create index if not exists idx_cotizador_cotizaciones_origen on public.cotizador_cotizaciones(origen);
 
 create or replace function public.set_cotizacion_folio()
 returns trigger
@@ -75,7 +75,7 @@ language plpgsql
 as $$
 begin
   if new.folio is null or new.folio = '' then
-    new.folio := 'COT-' || to_char(new.fecha_cotizacion, 'YYYY') || '-' || lpad(nextval('public.cotizaciones_folio_seq')::text, 5, '0');
+    new.folio := 'COT-' || to_char(new.fecha_cotizacion, 'YYYY') || '-' || lpad(nextval('public.cotizador_cotizaciones_folio_seq')::text, 5, '0');
   end if;
   return new;
 end;
@@ -83,32 +83,32 @@ $$;
 
 do $$
 begin
-  create sequence public.cotizaciones_folio_seq;
+  create sequence public.cotizador_cotizaciones_folio_seq;
 exception
   when duplicate_table then null;
 end $$;
 
-drop trigger if exists trg_set_cotizacion_folio on public.cotizaciones;
-create trigger trg_set_cotizacion_folio
-before insert on public.cotizaciones
+drop trigger if exists trg_set_cotizador_cotizacion_folio on public.cotizador_cotizaciones;
+create trigger trg_set_cotizador_cotizacion_folio
+before insert on public.cotizador_cotizaciones
 for each row execute function public.set_cotizacion_folio();
 
-alter table public.users enable row level security;
-alter table public.productos enable row level security;
-alter table public.cotizaciones enable row level security;
-alter table public.cotizacion_detalle enable row level security;
+alter table public.cotizador_users enable row level security;
+alter table public.cotizador_productos enable row level security;
+alter table public.cotizador_cotizaciones enable row level security;
+alter table public.cotizador_cotizacion_detalle enable row level security;
 
-drop policy if exists "demo users read" on public.users;
-drop policy if exists "demo products read" on public.productos;
-drop policy if exists "demo quotes read write" on public.cotizaciones;
-drop policy if exists "demo quote detail read write" on public.cotizacion_detalle;
+drop policy if exists "demo users read" on public.cotizador_users;
+drop policy if exists "demo products read" on public.cotizador_productos;
+drop policy if exists "demo quotes read write" on public.cotizador_cotizaciones;
+drop policy if exists "demo quote detail read write" on public.cotizador_cotizacion_detalle;
 
-create policy "demo users read" on public.users for select using (true);
-create policy "demo products read" on public.productos for select using (true);
-create policy "demo quotes read write" on public.cotizaciones for all using (true) with check (true);
-create policy "demo quote detail read write" on public.cotizacion_detalle for all using (true) with check (true);
+create policy "demo users read" on public.cotizador_users for select using (true);
+create policy "demo products read" on public.cotizador_productos for select using (true);
+create policy "demo quotes read write" on public.cotizador_cotizaciones for all using (true) with check (true);
+create policy "demo quote detail read write" on public.cotizador_cotizacion_detalle for all using (true) with check (true);
 
-insert into public.users (nombre, email, password_demo, rol, sucursal, activo)
+insert into public.cotizador_users (nombre, email, password_demo, rol, sucursal, activo)
 values
   ('Enrique Salazar', 'house@gmail.com', '12345', 'supervisor', 'Corporativo', true),
   ('Carlos Mendoza', 'carlos.mendoza@cotizacioneshouse.com', 'house2026', 'asesor', 'Culiacan', true),
@@ -123,7 +123,7 @@ on conflict (email) do update set
   sucursal = excluded.sucursal,
   activo = excluded.activo;
 
-insert into public.productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
+insert into public.cotizador_productos (sku, modelo, marca, descripcion, color, categoria, precio_usd, precio_mxn, imagen_url, activo)
 values
   ('CAF-CTS90DP4NW2', 'CTS90DP4NW2', 'Cafe', 'Horno electrico de pared 30 pulgadas, conveccion europea, acabado blanco mate, controles tactiles y conectividad.', 'Blanco mate', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Cafe+Horno', true),
   ('CAF-CHS90XP2MS1', 'CHS90XP2MS1', 'Cafe', 'Estufa slide-in de induccion 30 pulgadas con horno de conveccion, acero inoxidable y controles frontales.', 'Acero inoxidable', 'Coccion', 0, 0, 'https://placehold.co/600x600?text=Cafe+Estufa', true),
@@ -141,3 +141,4 @@ on conflict (sku) do update set
   precio_mxn = excluded.precio_mxn,
   imagen_url = excluded.imagen_url,
   activo = excluded.activo;
+

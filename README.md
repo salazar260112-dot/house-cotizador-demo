@@ -1,10 +1,11 @@
-# Generador de Cotizaciones House
+﻿# Generador de Cotizaciones House
 
 Aplicacion independiente para asesores de House Electrodomesticos. Permite iniciar sesion por rol, buscar productos en Supabase, crear cotizaciones, guardar detalle y solicitar generacion de PDF mediante webhook de n8n/PDF.co.
 
 ## Alcance
 
-- Proyecto aislado: no modifica n8n ni Supabase del agente de ventas.
+- Proyecto aislado por tablas prefijadas dentro del Supabase `house-electrodomesticos-test`.
+- No modifica n8n ni las tablas del agente de ventas.
 - Puerto sugerido: `3105`.
 - Acceso temporal VPS: `http://IP-DE-LA-VPS:3105`.
 - Supervisor demo: `house@gmail.com` / `12345`.
@@ -39,7 +40,7 @@ VITE_APP_BASE_URL=http://IP-DE-LA-VPS:3105
 
 ## Supabase
 
-1. Crear un proyecto nuevo separado para `house-cotizador-demo`.
+1. Abrir el proyecto Supabase existente `house-electrodomesticos-test`.
 2. Abrir SQL Editor.
 3. Ejecutar `supabase/house_cotizador_schema.sql`.
 4. Ejecutar `supabase/products_from_price_lists.sql` para cargar el catalogo desde Excel.
@@ -47,10 +48,10 @@ VITE_APP_BASE_URL=http://IP-DE-LA-VPS:3105
 
 Tablas incluidas:
 
-- `users`
-- `productos`
-- `cotizaciones`
-- `cotizacion_detalle`
+- `cotizador_users`
+- `cotizador_productos`
+- `cotizador_cotizaciones`
+- `cotizador_cotizacion_detalle`
 
 El SQL no borra datos existentes y usa `create table if not exists` / `insert ... on conflict`.
 
@@ -66,10 +67,10 @@ Solo importa SKU/modelo, marca, descripcion y categoria. No importa precios ni c
 La pantalla `Nueva Cotizacion` hace lo siguiente al presionar `Generar PDF`:
 
 1. Valida cliente, correo, asesor/origen y productos.
-2. Inserta encabezado en `cotizaciones`.
-3. Inserta productos en `cotizacion_detalle`.
+2. Inserta encabezado en `cotizador_cotizaciones`.
+3. Inserta productos en `cotizador_cotizacion_detalle`.
 4. Envia payload a `VITE_N8N_WEBHOOK_GENERAR_PDF`.
-5. Si n8n responde con `pdf_url`, `pdfUrl` o `url`, actualiza `cotizaciones.pdf_url` y estatus `Enviada`.
+5. Si n8n responde con `pdf_url`, `pdfUrl` o `url`, actualiza `cotizador_cotizaciones.pdf_url` y estatus `Enviada`.
 
 Politica fija enviada al webhook:
 
@@ -121,3 +122,4 @@ git push -u origin main
 ```
 
 No subir `.env`.
+
