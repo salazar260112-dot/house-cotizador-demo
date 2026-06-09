@@ -13,6 +13,7 @@ interface CreateQuoteInput {
   sucursal: string;
   asesor_id: string;
   asesor_nombre: string;
+  asesor_email?: string;
   fuente_lead: string;
   observaciones: string;
   subtotal: number;
@@ -23,7 +24,11 @@ interface CreateQuoteInput {
 }
 
 function getPdfWebhookUrl() {
-  return import.meta.env.VITE_N8N_WEBHOOK_GENERAR_PDF || import.meta.env.N8N_WEBHOOK_GENERAR_PDF || '';
+  return (
+    import.meta.env.VITE_N8N_WEBHOOK_GENERAR_PDF ||
+    import.meta.env.N8N_WEBHOOK_GENERAR_PDF ||
+    'https://n8n.srv1452474.hstgr.cloud/webhook/cotizador/generar-pdf'
+  );
 }
 
 function getAppBaseUrl() {
@@ -91,6 +96,7 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
         politica_pdf: PDF_POLICY,
         html_pdf: htmlPdf,
         pdf_filename: `${quote.folio || quote.id}-house.pdf`,
+        asesor_email: input.asesor_email || '',
         cotizacion: quote,
         detalle: input.detalle,
         detalle_db: detalle,

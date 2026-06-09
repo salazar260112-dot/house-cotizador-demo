@@ -66,6 +66,7 @@ export default function NewQuotation() {
   const [leadSource, setLeadSource] = useState('');
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -242,6 +243,7 @@ export default function NewQuotation() {
   const handlePrintPdf = async () => {
     setFormError('');
     setSuccessMessage('');
+    setGeneratedPdfUrl('');
     const validation = validateQuotation();
     if (validation) {
       setFormError(validation);
@@ -262,6 +264,7 @@ export default function NewQuotation() {
         sucursal: branch,
         asesor_id: advisor?.id || '',
         asesor_nombre: responsibleName,
+        asesor_email: advisor?.email || '',
         fuente_lead: leadSource,
         observaciones: notes,
         subtotal: totalSubtotal,
@@ -270,6 +273,7 @@ export default function NewQuotation() {
         validity_days: validityDays,
         detalle: buildQuoteDetail(),
       });
+      setGeneratedPdfUrl(quote.pdf_url || '');
       setSuccessMessage(
         quote.pdf_url
           ? `Cotizacion ${quote.folio} generada y enviada correctamente.`
@@ -385,9 +389,22 @@ export default function NewQuotation() {
         )}
 
         {successMessage && (
-          <div className="mb-4 bg-primary-50 border border-primary-200 text-primary-800 text-sm rounded-md px-4 py-3 flex items-start gap-2">
+          <div className="mb-4 bg-primary-50 border border-primary-200 text-primary-800 text-sm rounded-md px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-2">
             <i className="ri-checkbox-circle-line text-base mt-0.5 flex-shrink-0"></i>
             <span>{successMessage}</span>
+            </div>
+            {generatedPdfUrl && (
+              <a
+                href={generatedPdfUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-background-50 rounded-md text-sm font-medium whitespace-nowrap"
+              >
+                <i className="ri-download-2-line"></i>
+                Abrir PDF
+              </a>
+            )}
           </div>
         )}
 
