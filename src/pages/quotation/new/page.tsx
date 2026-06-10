@@ -48,6 +48,17 @@ function formatCurrency(amount: number, currency: 'USD' | 'MXN'): string {
 
 const IVA_RATE = 0.16;
 
+function downloadPdfOnDevice(pdfUrl: string, fileName = 'cotizacion-house.pdf') {
+  const link = document.createElement('a');
+  link.href = pdfUrl;
+  link.download = fileName;
+  link.target = '_blank';
+  link.rel = 'noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 export default function NewQuotation() {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
@@ -277,10 +288,14 @@ export default function NewQuotation() {
         validity_days: validityDays,
         detalle: buildQuoteDetail(),
       });
-      setGeneratedPdfUrl(quote.pdf_url || '');
+      const pdfUrl = quote.pdf_url || '';
+      setGeneratedPdfUrl(pdfUrl);
+      if (pdfUrl) {
+        downloadPdfOnDevice(pdfUrl, `${quote.folio || 'cotizacion-house'}.pdf`);
+      }
       setSuccessMessage(
         quote.pdf_url
-          ? `Cotizacion ${quote.folio} generada y enviada correctamente.`
+          ? `Cotizacion ${quote.folio} generada, enviada al correo del cliente y lista para descarga.`
           : `Cotizacion ${quote.folio} guardada. Falta configurar el webhook de PDF para generar la URL.`
       );
       setShowPreview(false);

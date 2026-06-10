@@ -104,11 +104,15 @@ export async function createQuoteAndRequestPdf(input: CreateQuoteInput) {
     });
 
     if (!response.ok) {
-      throw new Error(`n8n no pudo generar el PDF (${response.status})`);
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`n8n no pudo generar el PDF (${response.status})${errorText ? `: ${errorText}` : ''}`);
     }
 
     const result = await response.json().catch(() => ({}));
     pdfUrl = result.pdf_url || result.pdfUrl || result.url || '';
+    if (!pdfUrl) {
+      throw new Error('n8n respondio sin pdf_url. Revisa el nodo Responder a cotizador.');
+    }
   }
 
   if (pdfUrl) {
