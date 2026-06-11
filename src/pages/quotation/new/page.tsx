@@ -48,15 +48,30 @@ function formatCurrency(amount: number, currency: 'USD' | 'MXN'): string {
 
 const IVA_RATE = 0.16;
 
-function downloadPdfOnDevice(pdfUrl: string, fileName = 'cotizacion-house.pdf') {
-  const link = document.createElement('a');
-  link.href = pdfUrl;
-  link.download = fileName;
-  link.target = '_blank';
-  link.rel = 'noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+async function downloadPdfOnDevice(pdfUrl: string, fileName = 'cotizacion-house.pdf') {
+  try {
+    const response = await fetch(pdfUrl);
+    if (!response.ok) throw new Error('No fue posible descargar el PDF.');
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch {
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
 
 export default function NewQuotation() {
@@ -255,6 +270,27 @@ export default function NewQuotation() {
       subtotal: cp.subtotal,
     }));
 
+  const resetQuotationForm = () => {
+    const userBranch = advisor?.branch || advisor?.sucursal || '';
+    const userName = advisor?.name || advisor?.nombre || '';
+    setDate(getTodayDate());
+    setClientName('');
+    setClientPhone('');
+    setClientEmail('');
+    setCity('');
+    setOrigen(userBranch);
+    setBranch(userBranch);
+    setSelectedAdvisor(userName);
+    setResponsiblePerson('');
+    setLeadSource('');
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setCartProducts([]);
+    setNotes('');
+    setValidityDays(15);
+  };
+
   const handlePrintPdf = async () => {
     setFormError('');
     setSuccessMessage('');
@@ -291,13 +327,14 @@ export default function NewQuotation() {
       const pdfUrl = quote.pdf_url || '';
       setGeneratedPdfUrl(pdfUrl);
       if (pdfUrl) {
-        downloadPdfOnDevice(pdfUrl, `${quote.folio || 'cotizacion-house'}.pdf`);
+        await downloadPdfOnDevice(pdfUrl, `${quote.folio || 'cotizacion-house'}.pdf`);
       }
       setSuccessMessage(
         quote.pdf_url
-          ? `Cotizacion ${quote.folio} generada, enviada al correo del cliente y lista para descarga.`
+          ? `Cotizacion ${quote.folio} generada correctamente. El PDF fue enviado al correo del cliente y tambien esta listo para descargar aqui. El formulario quedo limpio para iniciar una nueva cotizacion.`
           : `Cotizacion ${quote.folio} guardada. Falta configurar el webhook de PDF para generar la URL.`
       );
+      resetQuotationForm();
       setShowPreview(false);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'No fue posible generar la cotizacion.');
@@ -421,7 +458,7 @@ export default function NewQuotation() {
                 className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-background-50 rounded-md text-sm font-medium whitespace-nowrap"
               >
                 <i className="ri-download-2-line"></i>
-                Abrir PDF
+                Descargar PDF
               </a>
             )}
           </div>
